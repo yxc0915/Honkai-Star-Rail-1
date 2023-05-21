@@ -1,32 +1,32 @@
 import os
 import traceback
+import time
+import ctypes
+import pyuac
+import questionary
+import logging
 
-try:
-    from tools.log import log, webhook_and_log
-    import time
-    import ctypes
-    import pyuac
-    import questionary
+from get_width import get_width, check_mult_screen
+from tools.config import read_json_file, modify_json_file, init_config_file, CONFIG_FILE_NAME
+from tools.map import Map
+from tools.update_file import update_file_main
+from tools.switch_window import switch_window
+from tools.exceptions import Exception
+from tools.log import log, webhook_and_log
 
-    from get_width import get_width, check_mult_screen
-    from tools.config import read_json_file, modify_json_file, init_config_file, CONFIG_FILE_NAME
-    from tools.map import Map
-    from tools.update_file import update_file_main
-    from tools.switch_window import switch_window
-    from tools.exceptions import Exception
-except:
-    pass
+
+from_star_list = {"空间站「黑塔」": "1", "雅利洛-VI": "2", "仙舟「罗浮」": "3"}
 
 
 def choose_map(map_instance: Map):
     title_ = "请选择起始星球："
-    options_map = {"空间站「黑塔」": "1", "雅利洛-VI": "2", "仙舟「罗浮」": "3"}
-    option_ = questionary.select(title_, list(options_map.keys())).ask()
-    main_map = options_map.get(option_)
+    options_map = list(from_star_list.keys())
+    option_ = questionary.select(title_, options_map).ask()
+    main_map = from_star_list.get(option_)
     title_ = "请选择起始地图："
     options_map = map_instance.map_list_map.get(main_map)
     if not options_map:
-        return
+        return None
     keys = list(options_map.keys())
     values = list(options_map.values())
     option_ = questionary.select(title_, values).ask()
@@ -51,7 +51,6 @@ def main():
         log.info("错误编号，请尝试检查更新")
         webhook_and_log("脚本已经完成运行")
 
-
 def main_start():
     if not read_json_file(CONFIG_FILE_NAME, False).get('start'):
         title = "请选择下载代理地址：（不使用代理选空白选项）"
@@ -70,18 +69,46 @@ def main_start():
 
 
 def up_data():
-    main_start()    # 无config直接更新时初始化config文件
-    if not read_json_file(CONFIG_FILE_NAME, False).get('map_debug'):
-        ghproxy = read_json_file(CONFIG_FILE_NAME, False).get('github_proxy', "")
-        if "rawgithub_proxy" not in read_json_file(CONFIG_FILE_NAME, False):
-            init_config_file(0, 0)
-            raise Exception("未检测到必要更新，强制更新脚本，请重新运行脚本")
+    ghproxy = read_json_file(CONFIG_FILE_NAME, False).get('github_proxy', "")
+    rawghproxy = read_json_file(CONFIG_FILE_NAME, False).get('rawgithub_proxy', "")
 
-        rawghproxy = read_json_file(CONFIG_FILE_NAME, False).get('rawgithub_proxy', "")
-        # asyncio.run(check_file(ghproxy, "map"))
-        # asyncio.run(check_file(ghproxy, "temp"))
-        up_data = [
-            {
+    if not read_json_file(CONFIG_FILE_NAME, False).get('map_debug'):
+    
+        # update map files
+        up_map = {
+            'url_proxy': ghproxy,
+            'raw_proxy': rawghproxy,
+            'skip_verify': False,
+            'type': "map",
+            'version': "map",
+            'url_zip': "https://github.com/Starry-Wind/Honkai-Star-Rail/archive/refs/heads/map.zip",
+            'unzip_path': "map",
+            'keep_folder': [],
+            'keep_file': [],
+            'zip_path': "Honkai-Star-Rail-map/",
+            'name': "地图"
+        }
+        update_file_main(**up_map)
+
+        # update temp files
+        up_temp = {
+            'url_proxy': ghproxy,
+            'raw_proxy': rawghproxy,
+            'skip_verify': False,
+            'type': "temp",
+            'version': "map",
+            'url_zip': "https://github.com/Starry-Wind/Honkai-Star-Rail/archive/refs/heads/map.zip",
+            'unzip_path': "temp",
+            'keep_folder': [],
+            'keep_file': [],
+            'zip_path': "Honkai-Star-Rail-map/",
+            'name': "图片"
+        }
+        update_file_main(**up_temp)
+
+        # update script files
+        if not read_json_file(CONFIG_FILE_NAME, False).get('script_debug', False):
+            up_script = {
                 'url_proxy': ghproxy,
                 'raw_proxy': rawghproxy,
                 'skip_verify': False,
@@ -93,38 +120,11 @@ def up_data():
                 'keep_file': ['config.json', 'version.json', 'star_list.json'],
                 'zip_path': "Honkai-Star-Rail-beta-2.7_test/",
                 'name': "脚本"
-            },
-            {
-                'url_proxy': ghproxy,
-                'raw_proxy': rawghproxy,
-                'skip_verify': False,
-                'type': "map",
-                'version': "map",
-                'url_zip': "https://github.com/Starry-Wind/Honkai-Star-Rail/archive/refs/heads/map.zip",
-                'unzip_path': "map",
-                'keep_folder': [],
-                'keep_file': [],
-                'zip_path': "Honkai-Star-Rail-map/",
-                'name': "地图"
-            },
-            {
-                'url_proxy': ghproxy,
-                'raw_proxy': rawghproxy,
-                'skip_verify': False,
-                'type': "temp",
-                'version': "map",
-                'url_zip': "https://github.com/Starry-Wind/Honkai-Star-Rail/archive/refs/heads/map.zip",
-                'unzip_path': "temp",
-                'keep_folder': [],
-                'keep_file': [],
-                'zip_path': "Honkai-Star-Rail-map/",
-                'name': "图片"
-            },
-        ]
-        for up in up_data:
-            if up["name"] == "脚本" and read_json_file(CONFIG_FILE_NAME, False).get('script_debug', False):
-                continue
-            update_file_main(**up)
+            }
+            update_file_main(**up_script)
+    else:
+        log.info("您没有更新脚本的权限")
+
 
 
 if __name__ == "__main__":
@@ -140,12 +140,12 @@ if __name__ == "__main__":
             elif option == "检查更新":
                 up_data()
     except ModuleNotFoundError as e:
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
         os.system("pip install -r requirements.txt")
-        print("请重新运行")
+        log.info("请重新运行")
     except NameError as e:
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
         os.system("pip install -r requirements.txt")
-        print("请重新运行")
-    except:
+        log.info("请重新运行")
+    except Exception as e:
         log.error(traceback.format_exc())
