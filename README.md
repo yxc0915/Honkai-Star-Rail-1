@@ -47,7 +47,7 @@ This software is open source, free of charge and for learning and exchange purpo
 
 1.1: 输入`pip install -r requirements.txt`安装依赖
 
-2：确认游戏语言为**简体中文**，按键配置皆为默认，灵敏度皆为默认值
+2：确认游戏语言为** **，按键配置皆为默认，灵敏度皆为默认值
 
 3：如果你的电脑分辨率为2560\*1440，请将游戏分辨率调为1920\*1080（窗口化）<br>
    如果你的电脑分辨率为1920\*1080，请将游戏分辨率调为1920\*1080（全屏幕）
@@ -59,7 +59,7 @@ This software is open source, free of charge and for learning and exchange purpo
 
 6：开怪角色请使用**远程攻击**角色，目前推荐**三月七**，跑图效果较稳定
 
-7：开启**Honkai_Star_Rail.bat**等待程序自动运行至可输入**地图编号**处
+7：打开命令行切换至脚本主目录，使用**python Honkai_Star_Rail.py**命令打开脚本
 
 8：如果你不知道**地图编号**是什么，或是你想要**重头开始**跑图，输入"0"后回车
 
