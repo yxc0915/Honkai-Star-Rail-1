@@ -59,7 +59,7 @@ This software is open source, free of charge and for learning and exchange purpo
 
 6：开怪角色请使用**远程攻击**角色，目前推荐**三月七**，跑图效果较稳定
 
-7：开启**Honkai_Star_Rail.bat**等待程序自动运行至可输入**地图编号**处
+7：在命令行中切换至脚本所在目录并输入**python Honkai_Star_Rail.py**运行脚本
 
 8：如果你不知道**地图编号**是什么，或是你想要**重头开始**跑图，输入"0"后回车
 
